@@ -15,7 +15,7 @@ def test_input_output_dimensions():
     assert output.shape == (1, 10), f"Output shape is {output.shape}, should be (1, 10)"
 
 def test_model_accuracy():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cpu")
     model = SimpleCNN().to(device)
     
     # Load the latest model
@@ -23,7 +23,7 @@ def test_model_accuracy():
     import os
     model_files = glob.glob('models/*.pth')
     latest_model = max(model_files, key=os.path.getctime)
-    model.load_state_dict(torch.load(latest_model))
+    model.load_state_dict(torch.load(latest_model, map_location=device))
     
     # Load test dataset
     transform = transforms.Compose([

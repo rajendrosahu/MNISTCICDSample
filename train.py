@@ -7,8 +7,9 @@ from datetime import datetime
 import os
 
 def train():
-    # Set device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Force CPU usage
+    device = torch.device("cpu")
+    print(f"Using device: {device}")
     
     # Load MNIST dataset
     transform = transforms.Compose([
@@ -42,6 +43,7 @@ def train():
     if not os.path.exists('models'):
         os.makedirs('models')
     torch.save(model.state_dict(), f'models/model_{timestamp}.pth')
+    print(f"Model saved as models/model_{timestamp}.pth")
     
 if __name__ == "__main__":
     train() 
