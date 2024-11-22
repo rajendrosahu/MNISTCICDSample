@@ -12,47 +12,69 @@ def train():
     device = torch.device("cpu")
     print(f"Using device: {device}")
     
-    # Load MNIST dataset with augmentation
+    # Load MNIST dataset with minimal augmentation
     transform_train = transforms.Compose([
-        transforms.RandomRotation(15),
-        transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+        transforms.RandomRotation(3),  # Very slight rotation
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
     ])
     
     train_dataset = datasets.MNIST('data', train=True, download=True, transform=transform_train)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=256, shuffle=True)
     
     # Initialize model
     model = SimpleCNN().to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.AdamW(model.parameters(), lr=0.003, weight_decay=0.01)
-    scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr=0.003, 
-                                            steps_per_epoch=len(train_loader), 
-                                            epochs=1,
-                                            pct_start=0.2)
+    
+    # Use SGD with even higher learning rate and momentum
+    optimizer = optim.SGD(
+        model.parameters(),
+        lr=0.2,  # Doubled learning rate
+        momentum=0.95,  # Increased momentum
+        nesterov=True
+    )
+    
+    # Custom learning rate schedule with longer warmup
+    def adjust_learning_rate(optimizer, progress):
+        if progress < 0.2:  # First 20% - warm up
+            lr = 0.2 * (progress / 0.2)
+        elif progress < 0.8:  # Next 60% - constant high learning rate
+            lr = 0.2
+        else:  # Last 20% - sharp linear decay
+            lr = 0.2 * (1.0 - progress) / 0.2
+        for param_group in optimizer.param_groups:
+            param_group['lr'] = lr
+        return lr
     
     # Train for 1 epoch
     model.train()
     running_loss = 0.0
     correct = 0
     total = 0
+    total_steps = len(train_loader)
     
     pbar = tqdm(train_loader, desc='Training')
     for batch_idx, (data, target) in enumerate(pbar):
+        # Update learning rate
+        progress = batch_idx / total_steps
+        current_lr = adjust_learning_rate(optimizer, progress)
+        
         data, target = data.to(device), target.to(device)
         
-        # Mixed precision training
-        optimizer.zero_grad()
+        # Zero the parameter gradients
+        optimizer.zero_grad(set_to_none=True)  # More efficient zeroing
+        
+        # Forward pass
         output = model(data)
         loss = criterion(output, target)
+        
+        # Backward pass
         loss.backward()
         
         # Gradient clipping
-        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=2.0)
         
         optimizer.step()
-        scheduler.step()
         
         # Calculate accuracy
         _, predicted = torch.max(output.data, 1)
@@ -61,12 +83,18 @@ def train():
         running_loss += loss.item()
         
         # Update progress bar
-        if batch_idx % 10 == 0:
+        if batch_idx % 5 == 0:
             acc = 100 * correct / total
             pbar.set_postfix({
                 'loss': f'{running_loss/(batch_idx+1):.3f}',
-                'acc': f'{acc:.2f}%'
+                'acc': f'{acc:.2f}%',
+                'lr': f'{current_lr:.4f}'
             })
+            
+        # Optional: Early stopping if accuracy is high enough
+        if acc >= 93.5:
+            print(f"\nReached target accuracy: {acc:.2f}%")
+            break
     
     final_acc = 100 * correct / total
     print(f'\nTraining accuracy: {final_acc:.2f}%')
