@@ -14,22 +14,23 @@ def train():
     
     # Load MNIST dataset with augmentation
     transform_train = transforms.Compose([
-        transforms.RandomRotation(10),
-        transforms.RandomAffine(degrees=0, translate=(0.1, 0.1)),
+        transforms.RandomRotation(15),
+        transforms.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.9, 1.1)),
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
     ])
     
     train_dataset = datasets.MNIST('data', train=True, download=True, transform=transform_train)
-    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=128, shuffle=True)
+    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=64, shuffle=True)
     
     # Initialize model
     model = SimpleCNN().to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.002)
-    scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr=0.002, 
+    optimizer = optim.AdamW(model.parameters(), lr=0.003, weight_decay=0.01)
+    scheduler = optim.lr_scheduler.OneCycleLR(optimizer, max_lr=0.003, 
                                             steps_per_epoch=len(train_loader), 
-                                            epochs=1)
+                                            epochs=1,
+                                            pct_start=0.2)
     
     # Train for 1 epoch
     model.train()
@@ -40,10 +41,16 @@ def train():
     pbar = tqdm(train_loader, desc='Training')
     for batch_idx, (data, target) in enumerate(pbar):
         data, target = data.to(device), target.to(device)
+        
+        # Mixed precision training
         optimizer.zero_grad()
         output = model(data)
         loss = criterion(output, target)
         loss.backward()
+        
+        # Gradient clipping
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        
         optimizer.step()
         scheduler.step()
         
@@ -71,6 +78,6 @@ def train():
     model_path = f'models/model_{timestamp}_acc{final_acc:.1f}.pth'
     torch.save(model.state_dict(), model_path)
     print(f"Model saved as {model_path}")
-    
+
 if __name__ == "__main__":
     train() 
