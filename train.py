@@ -12,9 +12,14 @@ def train():
     device = torch.device("cpu")
     print(f"Using device: {device}")
     
-    # Load MNIST dataset with minimal augmentation
+    # Load MNIST dataset with enhanced augmentation
     transform_train = transforms.Compose([
-        transforms.RandomRotation(3),  # Very slight rotation
+        transforms.RandomRotation(10),  # Increased rotation
+        transforms.RandomAffine(
+            degrees=0,
+            translate=(0.1, 0.1),  # Translation up to 10%
+            scale=(0.9, 1.1),  # Scaling between 90% and 110%
+        ),
         transforms.ToTensor(),
         transforms.Normalize((0.1307,), (0.3081,))
     ])
@@ -29,8 +34,8 @@ def train():
     # Use SGD with even higher learning rate and momentum
     optimizer = optim.SGD(
         model.parameters(),
-        lr=0.2,  # Doubled learning rate
-        momentum=0.95,  # Increased momentum
+        lr=0.2,
+        momentum=0.95,
         nesterov=True
     )
     
