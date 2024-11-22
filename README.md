@@ -1,5 +1,7 @@
 # MNIST Training with Data Augmentation
 
+![Build Status](https://github.com/rajendrosahu/MNISTCICDSample/actions/workflows/ml-pipeline.yml/badge.svg)
+
 This project implements a CNN model for MNIST digit classification with data augmentation.
 
 ## Data Augmentation Examples
@@ -30,4 +32,4 @@ The leftmost image shows the original digit, and the following images show diffe
 - Target accuracy: 93%
 
 ## Running the Project
-1. Install dependencies: 
+1. Install dependencies:
