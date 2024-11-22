@@ -28,7 +28,8 @@ jobs:
         pytest tests/
     
     - name: Upload trained model
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: trained-model
-        path: models/ 
+        path: models/
+        retention-days: 5
