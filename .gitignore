@@ -28,16 +28,15 @@ ENV/
 # Project specific
 data/
 models/
-.pytest_cache/
-.coverage
-htmlcov/
+*.pth
+.DS_Store
 
-# IDEs
+# IDE
 .idea/
 .vscode/
 *.swp
 *.swo
 
-# OS specific
-.DS_Store
-Thumbs.db 
+# Logs
+*.log
+logs/ 
