@@ -1,4 +1,4 @@
-# Basics CI/CD pipeline for MNIST Digit Recognition
+# Basics CI/CD pipeline for MNIST Digit Recognition.
 
 This repository contains a basic CI/CD pipeline for a MNIST Digit Recognition model.
 
