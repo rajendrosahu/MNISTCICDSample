@@ -29,7 +29,7 @@ The leftmost image shows the original digit, and the following images show diffe
 - Single epoch training
 - SGD optimizer with momentum
 - Custom learning rate scheduling
-- Target accuracy: 93%
+- Target accuracy: 95%
 
 ## Running the Project
 1. Install dependencies:
